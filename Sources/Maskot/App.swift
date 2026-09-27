@@ -267,7 +267,7 @@ final class Delegado: NSObject, NSApplicationDelegate {
             menuAPI.addItem(o)
         }
         menuAPI.addItem(.separator())
-        let info = NSMenuItem(title: "Nombre: \(nombreEquipo) · puerto \(puertoAPI)", action: nil, keyEquivalent: "")
+        let info = NSMenuItem(title: "Nombre: \(nombreEquipo) · puerto \(puertoAPI) · token \(tokenAPI.prefix(4))…", action: nil, keyEquivalent: "")
         info.isEnabled = false
         menuAPI.addItem(info)
         menuAPI.addItem(opcion("Cambiar nombre…", #selector(cambiarNombre)))
@@ -306,10 +306,21 @@ final class Delegado: NSObject, NSApplicationDelegate {
     }
 
     @objc private func pegarToken() {
-        guard let texto = NSPasteboard.general.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines),
-              texto.count >= 16, !texto.contains(" ") else { return }
-        tokenAPI = texto
-        prenderAPI()
+        let texto = NSPasteboard.general.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let valido = texto.count >= 16 && !texto.contains(where: \.isWhitespace)
+        if valido {
+            tokenAPI = texto
+            prenderAPI()
+            armarMenuAPI()
+        }
+        // Siempre confirma: sin esto no hay forma de saber si el pegado funcionó.
+        let alerta = NSAlert()
+        alerta.messageText = valido ? "Token guardado ✅" : "No hay un token en el portapapeles"
+        alerta.informativeText = valido
+            ? "Empieza por \(texto.prefix(4))…; debe coincidir con el del otro Mac."
+            : "En el otro Mac usa 🧢 → API local → Copiar token y vuelve a intentarlo aquí."
+        NSApp.activate(ignoringOtherApps: true)
+        alerta.runModal()
     }
 
     @objc private func copiarEjemplo() {
