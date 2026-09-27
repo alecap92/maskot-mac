@@ -14,7 +14,10 @@ import Network
 ///
 ///     GET  /estado                               cómo está la mascota
 ///     GET  /rutinas                              las rutinas que sabe hacer
-///     POST /aviso    {"mensaje", "urgente"?}     aviso normal o urgente
+///     POST /aviso    {"mensaje", "urgente"?, "hastaClic"?}
+///                                                aviso normal o urgente; por defecto
+///                                                insiste hasta que le den clic
+///     POST /visto                                descarta el aviso pendiente (como el clic)
 ///     POST /decir    {"mensaje", "segundos"?}    solo un globo, sin interrumpir
 ///     POST /rutina   {"rutina"}                  hace esa rutina ya
 ///     POST /pomodoro {"accion": "iniciar" | "detener"}
@@ -121,6 +124,7 @@ final class ServidorAPI: @unchecked Sendable {
                 "personaje": mascota.personaje.nombre,
                 "rutina": mascota.rutinaActual ?? NSNull(),
                 "dormido": mascota.dormido,
+                "avisoPendiente": mascota.alerta != nil,
             ]
             estado["pomodoro"] = p.activo
                 ? ["activo": true, "fase": p.fase.nombre, "tomate": p.tomate, "restante": p.reloj] as [String: Any]
@@ -133,8 +137,12 @@ final class ServidorAPI: @unchecked Sendable {
         case ("POST", "/aviso"):
             guard let mensaje, !mensaje.isEmpty else { return (400, ["error": "falta \"mensaje\""]) }
             let urgente = cuerpo["urgente"] as? Bool ?? false
-            mascota.hacer(urgente ? Biblioteca.urgente(mensaje) : Biblioteca.aviso(mensaje))
-            return (200, ["ok": true])
+            let hastaClic = cuerpo["hastaClic"] as? Bool ?? true
+            mascota.avisar(mensaje, urgente: urgente, hastaClic: hastaClic)
+            return (200, ["ok": true, "hastaClic": hastaClic])
+
+        case ("POST", "/visto"):
+            return (200, ["ok": true, "habiaAviso": mascota.descartarAviso()])
 
         case ("POST", "/decir"):
             guard let mensaje, !mensaje.isEmpty else { return (400, ["error": "falta \"mensaje\""]) }
@@ -158,7 +166,7 @@ final class ServidorAPI: @unchecked Sendable {
             return (200, ["ok": true, "activo": mascota.pomodoro.activo])
 
         default:
-            return (404, ["error": "ruta desconocida", "rutas": ["GET /estado", "GET /rutinas", "POST /aviso", "POST /decir", "POST /rutina", "POST /pomodoro"]])
+            return (404, ["error": "ruta desconocida", "rutas": ["GET /estado", "GET /rutinas", "POST /aviso", "POST /visto", "POST /decir", "POST /rutina", "POST /pomodoro"]])
         }
     }
 }

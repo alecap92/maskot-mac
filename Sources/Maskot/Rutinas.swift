@@ -355,6 +355,20 @@ enum Biblioteca {
         }
     }
 
+    /// El "sigue llamando" de un aviso que espera clic: se repite hasta que lo
+    /// descarten. Urgente: brinca agitando los brazos; normal: un saltico
+    /// cada pocos segundos. El globo no se quita.
+    static func insistir(_ mensaje: String, urgente: Bool) -> Rutina {
+        Rutina(nombre: urgente ? "Recordatorio urgente" : "Aviso", peso: 0) { _ in
+            if urgente {
+                var pasos: [Accion] = [.cara(.sorprendido), .decir(mensaje)]
+                for i in 0..<6 { pasos += [.brazos(derecho: i % 2 == 0, izquierdo: i % 2 == 1), .saltar] }
+                return pasos + [.brazos(derecho: true, izquierdo: true), .esperar(0.8)]
+            }
+            return [.cara(.sorprendido), .decir(mensaje), .saltar, .cara(.feliz), .esperar(4)]
+        }
+    }
+
     /// Un aviso normal: da un saltico para llamar la atención y deja el globo
     /// un buen rato (`segundos`).
     static func aviso(_ mensaje: String, cara: Expresion = .sorprendido, segundos: TimeInterval = 8) -> Rutina {

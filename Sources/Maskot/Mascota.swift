@@ -167,6 +167,9 @@ final class Mascota {
     var dormido = false { didSet { if dormido { hacer(nil) } } }
     var anchoEscena: CGFloat = 1440
     let pomodoro = Pomodoro()
+    /// Un aviso que espera clic: mientras exista, la mascota lo repite y no hace
+    /// nada más (ni rutinas al azar ni cambios del pomodoro).
+    private(set) var alerta: Rutina?
     /// Nombre de la rutina en curso (para `GET /estado`).
     private(set) var rutinaActual: String?
     /// Días en que se ha usado la app; se revisa cada tanto por si cambió el día.
@@ -231,6 +234,14 @@ final class Mascota {
 
         // Con el Pomodoro corriendo, el reloj manda: nada de rutinas al azar
         // ni avisos. Si algo lo interrumpe (un clic), vuelve a lo de la fase.
+        // Un aviso pendiente manda sobre todo: sigue llamando hasta el clic.
+        if let alerta {
+            _ = pomodoro.avanzar(dt: dt) // el reloj sigue, pero sin cambiar de actividad
+            if actual == nil && cola.isEmpty { hacer(alerta) }
+            avanzar(dt: dt)
+            return
+        }
+
         if pomodoro.activo {
             if let evento = pomodoro.avanzar(dt: dt) { reaccionar(a: evento) }
             if actual == nil && cola.isEmpty { hacerFase(anuncia: false) }
@@ -302,12 +313,41 @@ final class Mascota {
 
     /// Clic sobre la mascota: salta y pasa a otra cosa. Si estaba dormido o
     /// descansando, se levanta.
+    /// Descarta el aviso pendiente como si le hubieran dado clic. `false` si no había.
+    @discardableResult
+    func descartarAviso() -> Bool {
+        guard alerta != nil else { return false }
+        alClic()
+        return true
+    }
+
     func alClic() {
+        // Con un aviso pendiente, el clic es "visto": lo descarta.
+        if alerta != nil {
+            alerta = nil
+            hacer(Rutina(nombre: "Visto", peso: 0) { _ in
+                [.brazos(derecho: false, izquierdo: false), .cara(.feliz), .saltar,
+                 .decir("¡Visto! 👍"), .esperar(1.5), .decir(nil), .cara(.neutro)]
+            })
+            return
+        }
         let estabaDescansando = dormido || postura != .dePie || expresion == .dormido
         hacer(Biblioteca.llamada("Saltar"))
         if estabaDescansando {
             cola.insert(contentsOf: [.decir(Frases.despertar.randomElement()), .cara(.sorprendido)], at: 0)
             cola.append(.decir(nil))
+        }
+    }
+
+    /// Un aviso de afuera (la API). Con `hastaClic`, después de la llamada
+    /// inicial se queda insistiendo hasta que le den clic.
+    func avisar(_ mensaje: String, urgente: Bool, hastaClic: Bool) {
+        alerta = nil
+        hacer(urgente ? Biblioteca.urgente(mensaje) : Biblioteca.aviso(mensaje))
+        if hastaClic {
+            // La primera vuelta es la llamada completa; después, la insistencia.
+            cola = Array(cola.dropLast(3)) // sin el "quitar globo" del final
+            alerta = Biblioteca.insistir(mensaje, urgente: urgente)
         }
     }
 

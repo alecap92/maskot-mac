@@ -130,7 +130,8 @@ curl -X POST http://mi-mac.local:7777/rutina \
 |---|---|---|
 | `GET /estado` | | personaje, rutina actual, estado del pomodoro |
 | `GET /rutinas` | | la lista de rutinas |
-| `POST /aviso` | `{"mensaje", "urgente"?}` | aviso normal o urgente (interrumpe lo que esté haciendo) |
+| `POST /aviso` | `{"mensaje", "urgente"?, "hastaClic"?}` | aviso normal o urgente; **insiste hasta que le des clic** (con `"hastaClic": false` se va solo) |
+| `POST /visto` | | descarta el aviso pendiente, igual que el clic |
 | `POST /decir` | `{"mensaje", "segundos"?}` | solo un globo, sin interrumpir |
 | `POST /rutina` | `{"rutina"}` | hace esa rutina ya |
 | `POST /pomodoro` | `{"accion": "iniciar" \| "detener"}` | controla el pomodoro |
