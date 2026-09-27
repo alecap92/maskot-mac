@@ -27,6 +27,13 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
   <key>CFBundleShortVersionString</key><string>0.1</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>LSUIElement</key><true/>
+
+  <!-- API local en modo red: macOS pide permiso de "Red local" y exige declarar
+       el servicio Bonjour para poder anunciarse (si no, otros equipos no la ven). -->
+  <key>NSLocalNetworkUsageDescription</key>
+  <string>Maskot recibe avisos de otros equipos de tu red (API local) y se anuncia para que la encuentren.</string>
+  <key>NSBonjourServices</key>
+  <array><string>_maskot._tcp</string></array>
   <key>NSHighResolutionCapable</key><true/>
 </dict></plist>
 PLIST

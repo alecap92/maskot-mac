@@ -143,6 +143,9 @@ avisos los descubre con `dns-sd -B _maskot._tcp` (macOS) o `avahi-browse -rt _ma
 token* en uno y *Pegar token* en los demás. El menú también copia un `curl` de ejemplo
 listo para probar.
 
+Si otro equipo no aparece: en ese Mac, Ajustes del Sistema → Privacidad y seguridad →
+**Red local** → activa **Maskot** y vuelve a abrir la app.
+
 ## Personajes
 
 | | Personaje | Qué es |
