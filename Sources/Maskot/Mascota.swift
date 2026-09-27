@@ -214,6 +214,7 @@ final class Mascota {
     private var parpadeando = false
     private var parpadeoHasta: TimeInterval = 0
     private var reloj: TimeInterval = 0
+    private var ultimaRevisionDeDia: TimeInterval = 0
     private var proximoAviso: TimeInterval = .random(in: 90...180)
     private var sentado = ContadorSentado()
     /// Hasta cuándo se ve un globo suelto (que no es parte de una rutina).
@@ -222,8 +223,15 @@ final class Mascota {
     func tick(dt: TimeInterval) {
         ticks += 1
         reloj += dt
-        if ticks % 6 == 0 { destello += 1 }
-        if ticks % (20 * 60) == 0 { diasDeUso = DiasDeUso.registrar() }
+        // Los efectos cambian cada 0.3 s de reloj, sea cual sea el ritmo de los
+        // ticks (20 por segundo despierta, 5 dormida). Solo se asigna si cambió,
+        // para no redibujar la escena en cada tick.
+        let d = Int(reloj / 0.3)
+        if d != destello { destello = d }
+        if reloj - ultimaRevisionDeDia >= 60 {
+            ultimaRevisionDeDia = reloj
+            diasDeUso = DiasDeUso.registrar()
+        }
         if dormido { return }
 
         parpadear()

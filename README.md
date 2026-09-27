@@ -47,6 +47,11 @@ se echa una siesta… y cuando llevas mucho rato sentado, te invita a estirar.
 - **Una matica que crece.** De vez en cuando la riega, y cada día que usas el Mac está
   un poco más grande (de semilla a florecida en 30 días).
 - **8 personajes.** Clawd y la familia Koru; se eligen desde el menú.
+- **Liviana.** Todo es pixel art dibujado en código, sin imágenes ni procesos de fondo:
+  unas decenas de MB de RAM y una fracción de un núcleo. Se anima a 20 cuadros por
+  segundo, baja a 5 cuando duerme y se detiene del todo cuando la pantalla se apaga
+  (salvo con el Pomodoro andando, que sigue contando). Puedes dejarla abierta todo el
+  día sin que se note.
 
 ## Instalación
 

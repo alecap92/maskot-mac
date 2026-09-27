@@ -24,6 +24,9 @@ final class Delegado: NSObject, NSApplicationDelegate {
     private var panel: NSPanel?
     private var item: NSStatusItem?
     private var reloj: Timer?
+    /// Ticks por segundo del reloj que está andando (0 = detenido).
+    private var ritmo: Double = 0
+    private var pantallaDormida = false
     private var servidor: ServidorAPI?
     private var menuAPI: NSMenu?
     private var opcionPomodoro: NSMenuItem?
@@ -43,21 +46,70 @@ final class Delegado: NSObject, NSApplicationDelegate {
         ) { [weak self] _ in
             MainActor.assumeIsolated { self?.acomodarPanel() }
         }
-        let dt = 1.0 / 20
-        let reloj = Timer(timeInterval: dt, repeats: true) { [weak self] _ in
+        // Con la pantalla apagada no hay nada que animar: el reloj se detiene
+        // (o baja de ritmo si el Pomodoro sigue contando) y vuelve al despertar.
+        let taller = NSWorkspace.shared.notificationCenter
+        taller.addObserver(forName: NSWorkspace.screensDidSleepNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
-                self?.mascota.tick(dt: dt)
-                self?.dejarPasarElMouse()
-                self?.mostrarPomodoro()
+                self?.pantallaDormida = true
+                self?.ajustarRitmo()
             }
         }
-        RunLoop.main.add(reloj, forMode: .common) // sigue animando con el menú abierto
-        self.reloj = reloj
+        taller.addObserver(forName: NSWorkspace.screensDidWakeNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.pantallaDormida = false
+                self?.ajustarRitmo()
+            }
+        }
+        ajustarRitmo()
         // Atajo de desarrollo: `MASKOT_DEMO="Botar una hoja" swift run Maskot`
         // arranca con esa rutina de la biblioteca.
         let demo = ProcessInfo.processInfo.environment["MASKOT_DEMO"]
         let inicial = Biblioteca.rutinas.first { $0.nombre == demo } ?? Biblioteca.llamada("Saludar")
         mascota.hacer(inicial)
+    }
+
+    // MARK: - Reloj
+
+    /// Ticks por segundo. A 20 la animación es fluida; a 5 alcanza para las zetas
+    /// de la mascota dormida o para que el Pomodoro siga contando con la pantalla
+    /// apagada. Con la pantalla apagada y sin Pomodoro, el reloj se detiene.
+    private enum Ritmo {
+        static let normal = 20.0
+        static let lento = 5.0
+        static let detenido = 0.0
+    }
+
+    private var ritmoDeseado: Double {
+        if pantallaDormida { return mascota.pomodoro.activo ? Ritmo.lento : Ritmo.detenido }
+        return mascota.dormido ? Ritmo.lento : Ritmo.normal
+    }
+
+    /// Cambia el reloj solo si el ritmo que toca es distinto al que anda. Se
+    /// revisa en cada tick (la mascota se duerme o despierta desde el menú, un
+    /// clic o la API) y cuando la pantalla se apaga o prende.
+    private func ajustarRitmo() {
+        let hz = ritmoDeseado
+        guard hz != ritmo else { return }
+        reloj?.invalidate()
+        reloj = nil
+        ritmo = hz
+        guard hz > 0 else { return }
+        let dt = 1.0 / hz
+        let nuevo = Timer(timeInterval: dt, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.mascota.tick(dt: dt)
+                self.dejarPasarElMouse()
+                self.mostrarPomodoro()
+                self.ajustarRitmo()
+            }
+        }
+        // Con tolerancia, macOS agrupa este despertar con los de otros procesos
+        // y el sistema duerme más seguido; el desfase no se nota en pixel art.
+        nuevo.tolerance = dt / 4
+        RunLoop.main.add(nuevo, forMode: .common) // sigue animando con el menú abierto
+        reloj = nuevo
     }
 
     /// Una franja transparente a **todo el ancho** de la pantalla principal,

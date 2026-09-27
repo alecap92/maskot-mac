@@ -80,6 +80,10 @@ characters/             un personaje por carpeta (ver characters/README.md)
   Se reacomoda con `didChangeScreenParametersNotification`.
 - `ignoresMouseEvents` se prende y apaga en cada tick según si el mouse está sobre la
   mascota: el resto de la franja deja pasar los clics.
+- El reloj (`Delegado.ajustarRitmo`) va a 20 ticks/s despierta, 5 dormida y se detiene
+  con la pantalla apagada (5 si el Pomodoro está activo). Tiene tolerancia para que
+  macOS agrupe los despertares. Los efectos (`destello`) van por tiempo de `reloj`, no
+  por conteo de ticks, así se ven igual a cualquier ritmo.
 - Cada `Rutina` tiene un `lugar`: `.aqui`, `.cerca` (camina unos pasos) o `.esquina`
   (lo largo —leer, dormir, programar, Pomodoro— se va a un rincón para no estorbar en el centro).
 - Con el Pomodoro activo, el reloj manda: no hay rutinas al azar, avisos ni pausa activa;
