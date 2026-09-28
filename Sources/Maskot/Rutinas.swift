@@ -290,6 +290,17 @@ enum Biblioteca {
         Rutina(nombre: "Saludar", peso: 0) { _ in
             [.cara(.feliz), .decir(Frases.saludos.randomElement()), .esperar(3.5), .decir(nil), .cara(.neutro)]
         },
+        // Sale sola a los 15 minutos sin teclado ni mouse (ver `ContadorSentado`).
+        // Se acuesta y el reloj de la app baja al mínimo; el primer toque la
+        // despierta. Desde el menú sirve para mandarla a dormir hasta que vuelvas.
+        Rutina(nombre: "Dormir hasta que vuelvas", peso: 0, lugar: .esquina) { c in
+            let dir = c.haciaDondeCabe
+            let camaX = c.sitio(dir, 170)
+            return [
+                .cara(.parpadeo), .mueble(.cama, camaX), .decir(Frases.hastaQueVuelvas), .esperar(2), .decir(nil),
+                .cara(.neutro), .irA(camaX), .postura(.acostado), .esperar(1.5), .dormirse,
+            ]
+        },
     ]
 
     // MARK: Pomodoro

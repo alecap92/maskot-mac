@@ -411,7 +411,7 @@ final class Delegado: NSObject, NSApplicationDelegate {
     @objc private func hacerRutina(_ o: NSMenuItem) { mascota.hacer(Biblioteca.rutinas[o.tag]) }
     @objc private func ponerCara(_ o: NSMenuItem) { mascota.mostrar(Expresion.allCases[o.tag]) }
     @objc private func ponerGorra(_ o: NSMenuItem) { mascota.gorra = Gorra.allCases[o.tag] }
-    @objc private func dormir() { mascota.dormido.toggle() }
+    @objc private func dormir() { mascota.alternarSueno() }
     @objc private func ocultar() {
         guard let panel else { return }
         if panel.isVisible { panel.orderOut(nil) } else { panel.orderFrontRegardless() }

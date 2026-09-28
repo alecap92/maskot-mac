@@ -20,6 +20,7 @@ enum Fotos {
             return
         }
         let mascota = Mascota()
+        mascota.duermeSiTeVas = false // si el Mac lleva rato solo, que no se acueste a mitad de foto
         if let id = ProcessInfo.processInfo.environment["MASKOT_PERSONAJE"], let p = Catalogo.buscar(id) {
             mascota.personaje = p
         }

@@ -9,12 +9,20 @@ struct ContadorSentado {
     var limite: TimeInterval = 50 * 60
     /// Si no toca el computador este tiempo, ya hizo una pausa.
     var pausa: TimeInterval = 5 * 60
+    /// Sin teclado ni mouse este tiempo, el usuario se fue: la mascota se
+    /// acuesta a dormir (y el reloj baja al mínimo) hasta que vuelva.
+    static let inactividadParaDormir: TimeInterval = 15 * 60
 
     private var activo: TimeInterval = 0
 
+    /// Hace cuántos segundos fue el último evento de teclado o mouse.
+    static func quieto() -> TimeInterval {
+        CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: CGEventType(rawValue: ~0)!)
+    }
+
     /// Avanza el reloj; `true` cuando toca levantarse (y vuelve a contar).
     mutating func avanzar(dt: TimeInterval) -> Bool {
-        let quieto = CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: CGEventType(rawValue: ~0)!)
+        let quieto = Self.quieto()
         if quieto >= pausa {
             activo = 0
             return false

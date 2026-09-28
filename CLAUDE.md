@@ -40,7 +40,7 @@ Sources/
     Rutinas+Movimiento.swift bailar y el estiramiento guiado (lo lanza también la pausa activa)
     DiasDeUso.swift     días distintos en que se abrió la app (la matica)
     Frases.swift        textos de los globos
-    Sentado.swift       cuánto lleva el usuario sin pausa (para la pausa activa)
+    Sentado.swift       cuánto lleva el usuario sin pausa (pausa activa) y sin tocar nada (se duerme)
     API.swift           API local HTTP (Network.framework) + Bonjour `_maskot._tcp` + token
     Pomodoro.swift      el reloj del Pomodoro (fases, tomates, avisos de mitad y 5 min)
     Escena.swift        la vista: mueble → personaje → cobija/libro/laptop/cosa → globo
@@ -84,6 +84,10 @@ characters/             un personaje por carpeta (ver characters/README.md)
   con la pantalla apagada (5 si el Pomodoro está activo). Tiene tolerancia para que
   macOS agrupe los despertares. Los efectos (`destello`) van por tiempo de `reloj`, no
   por conteo de ticks, así se ven igual a cualquier ritmo.
+- A los 15 min sin teclado ni mouse (`ContadorSentado.inactividadParaDormir`) sale la
+  rutina "Dormir hasta que vuelvas": se acuesta y `.dormirse` la deja `dormido` con
+  `dormidoHastaQueVuelva`; el primer evento de entrada la despierta. `dormido` ya no
+  resetea la escena por sí solo: el menú usa `alternarSueno()`.
 - Cada `Rutina` tiene un `lugar`: `.aqui`, `.cerca` (camina unos pasos) o `.esquina`
   (lo largo —leer, dormir, programar, Pomodoro— se va a un rincón para no estorbar en el centro).
 - Con el Pomodoro activo, el reloj manda: no hay rutinas al azar, avisos ni pausa activa;

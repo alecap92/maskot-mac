@@ -73,6 +73,9 @@ enum Accion: Sendable {
     case golosina(Utileria.Golosina?, lamiendo: Bool)
     /// La pesa del gym: `true` arriba, `false` abajo, `nil` la suelta.
     case pesa(Bool?)
+    /// Se queda dormida donde está (acostada, si hay cama) y vacía la cola:
+    /// el reloj baja al mínimo y el primer toque de teclado o mouse la despierta.
+    case dormirse
     case dejarHoja(CGFloat)
     case arrugarHoja
     case cargar
@@ -164,7 +167,14 @@ final class Mascota {
     var laptop = false
     /// Altura del salto, en puntos.
     var altura: CGFloat = 0
-    var dormido = false { didSet { if dormido { hacer(nil) } } }
+    /// Dormida: no hace nada y el reloj de la app baja de ritmo. Desde el menú
+    /// se duerme de pie donde está (`alternarSueno`); por inactividad, en la cama.
+    var dormido = false { didSet { if !dormido { dormidoHastaQueVuelva = false } } }
+    /// Se acostó porque el usuario se fue: el primer toque la despierta.
+    private(set) var dormidoHastaQueVuelva = false
+    /// Si se acuesta sola cuando el usuario lleva un rato sin tocar nada
+    /// (`ContadorSentado.inactividadParaDormir`). Las fotos lo apagan.
+    var duermeSiTeVas = true
     var anchoEscena: CGFloat = 1440
     let pomodoro = Pomodoro()
     /// Un aviso que espera clic: mientras exista, la mascota lo repite y no hace
@@ -232,7 +242,11 @@ final class Mascota {
             ultimaRevisionDeDia = reloj
             diasDeUso = DiasDeUso.registrar()
         }
-        if dormido { return }
+        if dormido {
+            // Se acostó hasta que volvieras: al primer toque se levanta.
+            if dormidoHastaQueVuelva, ContadorSentado.quieto() < 1 { despertarse() }
+            return
+        }
 
         parpadear()
         if let h = globoHasta, reloj >= h {
@@ -260,6 +274,11 @@ final class Mascota {
         // Lleva mucho rato sin pausa: esto sí interrumpe lo que esté haciendo.
         if sentado.avanzar(dt: dt) {
             hacer(Biblioteca.llamada("Estiramiento"))
+        }
+        // El usuario se fue: se acuesta hasta que vuelva (y gasta lo mínimo).
+        if duermeSiTeVas, !dormidoHastaQueVuelva, ContadorSentado.quieto() >= ContadorSentado.inactividadParaDormir {
+            hacer(Biblioteca.llamada("Dormir hasta que vuelvas"))
+            dormidoHastaQueVuelva = true // después de `hacer`, que lo limpia
         }
         if actual == nil && cola.isEmpty {
             if reloj >= proximoAviso {
@@ -340,10 +359,23 @@ final class Mascota {
             return
         }
         let estabaDescansando = dormido || postura != .dePie || expresion == .dormido
+        if estabaDescansando { despertarse() } else { hacer(Biblioteca.llamada("Saltar")) }
+    }
+
+    /// Se levanta de golpe, con susto, y sigue con su día.
+    private func despertarse() {
         hacer(Biblioteca.llamada("Saltar"))
-        if estabaDescansando {
-            cola.insert(contentsOf: [.decir(Frases.despertar.randomElement()), .cara(.sorprendido)], at: 0)
-            cola.append(.decir(nil))
+        cola.insert(contentsOf: [.decir(Frases.despertar.randomElement()), .cara(.sorprendido)], at: 0)
+        cola.append(.decir(nil))
+    }
+
+    /// El "Dormir / Despertar" del menú: se duerme de pie donde está, o se levanta.
+    func alternarSueno() {
+        if dormido {
+            dormido = false
+        } else {
+            hacer(nil)
+            dormido = true
         }
     }
 
@@ -614,6 +646,10 @@ final class Mascota {
                 let m = mano
                 cosa?.centro = m
             }
+        case .dormirse:
+            cola = []
+            dormido = true
+            dormidoHastaQueVuelva = true
         case .esperar, .pasear, .irA, .saltar, .lanzarALaCaneca,
              .volar, .caer, .rebotar, .toque, .levitar, .conducir: return false
         case .lanzarAvion:

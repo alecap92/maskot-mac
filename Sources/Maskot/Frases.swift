@@ -120,6 +120,7 @@ enum Frases {
     static let gym = (inicio: "Hora del gym 💪", fin: "¡Uff! Mañana no me paro 😮‍💨")
     static let leer = (inicio: "Voy a leer un ratico 📖", fin: "Qué buen libro…")
     static let cama = (inicio: "Me voy a echar una siestica 😴", fin: "¡Como nuevo! ✨")
+    static let hastaQueVuelvas = "¿Te fuiste? Me acuesto hasta que vuelvas 😴"
 
     static let botarHoja = (encuentra: "¿Y esta hoja qué? 🤨", celebra: "¡Canasta! 🏀")
 }
